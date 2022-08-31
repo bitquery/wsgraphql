@@ -2,7 +2,7 @@
 package wsgraphql
 
 import (
-	"github.com/eientei/wsgraphql/v1/apollows"
+	"github.com/bitquery/wsgraphql/v1/apollows"
 )
 
 // WebsocketSubprotocolGraphqlWS websocket subprotocol expected by subscriptions-transport-ws implementations

@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/eientei/wsgraphql/v1/apollows"
-	"github.com/eientei/wsgraphql/v1/mutable"
+	"github.com/bitquery/wsgraphql/v1/apollows"
+	"github.com/bitquery/wsgraphql/v1/mutable"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/gqlerrors"
 )

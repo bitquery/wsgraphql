@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/eientei/wsgraphql/v1/apollows"
+	"github.com/bitquery/wsgraphql/v1/apollows"
 	"github.com/stretchr/testify/assert"
 )
 
