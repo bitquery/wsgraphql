@@ -1,4 +1,4 @@
-module github.com/eientei/wsgraphql
+module github.com/bitquery/wsgraphql
 
 go 1.17
 
