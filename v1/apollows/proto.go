@@ -251,6 +251,9 @@ func (payload *Data) UnmarshalJSON(bs []byte) (err error) {
 
 // MarshalJSON marshals either provided or deserialized Value as json
 func (payload Data) MarshalJSON() (bs []byte, err error) {
+	if payload.Value == nil {
+		return nil, nil
+	}
 	return json.Marshal(payload.Value)
 }
 
