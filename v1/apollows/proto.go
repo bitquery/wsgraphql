@@ -5,11 +5,17 @@ package apollows
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 )
 
 // Protocol websocket subprotocol defining server behavior
 type Protocol string
+
+// String conversion
+func (p Protocol) String() string {
+	return string(p)
+}
 
 const (
 	// WebsocketSubprotocolGraphqlWS websocket subprotocol expected by subscriptions-transport-ws implementations
@@ -18,6 +24,9 @@ const (
 	// WebsocketSubprotocolGraphqlTransportWS websocket subprotocol exepected by graphql-ws implementations
 	WebsocketSubprotocolGraphqlTransportWS Protocol = "graphql-transport-ws"
 )
+
+// ErrUnknownProtocol indicates that unknown subscription protocol was requested
+var ErrUnknownProtocol = errors.New("unknown subscription protocol")
 
 // Operation type is used to enumerate possible apollo message types
 type Operation string
@@ -38,7 +47,7 @@ const (
 	OperationSubscribe Operation = "subscribe"
 
 	// OperationTerminate [GWS]
-	// client request to gracefully close the connection, equialent to closing the websocket
+	// client request to gracefully close the connection, equivalent to closing the websocket
 	OperationTerminate Operation = "connection_terminate"
 
 	// OperationConnectionError [GWS]
@@ -188,6 +197,15 @@ type Data struct {
 	json.RawMessage
 }
 
+// Ptr returns non-nil pointer to Data if it is not empty
+func (payload *Data) Ptr() *Data {
+	if payload == nil || payload.Value == nil {
+		return nil
+	}
+
+	return payload
+}
+
 // ReadPayloadData client-side method to parse server response
 func (payload *Data) ReadPayloadData() (*PayloadDataResponse, error) {
 	if payload == nil {
@@ -254,17 +272,6 @@ func (payload Data) MarshalJSON() (bs []byte, err error) {
 	return json.Marshal(payload.Value)
 }
 
-func (message Message) MarshalJSON() (bs []byte, err error) {
-	mapJson := map[string]interface{}{"type": message.Type}
-	if message.ID != "" {
-		mapJson["id"] = message.ID
-	}
-	if message.Payload.Value != nil {
-		mapJson["payload"] = message.Payload.Value
-	}
-	return json.Marshal(mapJson)
-}
-
 // PayloadInit provides connection params
 type PayloadInit map[string]interface{}
 
@@ -276,13 +283,27 @@ type PayloadOperation struct {
 	OperationName string                 `json:"operationName"`
 }
 
-// PayloadData provides server-side response for previously started operation
-type PayloadData struct {
-	Data Data `json:"data,omitempty"`
+// PayloadDataRaw provides server-side response for previously started operation
+type PayloadDataRaw struct {
+	Data Data `json:"data"`
 
 	// see https://github.com/graph-gophers/graphql-go#custom-errors
 	// for adding custom error attributes
 	Errors []error `json:"errors,omitempty"`
+}
+
+// PayloadData type-alias for serialization
+type PayloadData PayloadDataRaw
+
+// MarshalJSON serializes PayloadData to JSON, excluding empty data
+func (payload PayloadData) MarshalJSON() (bs []byte, err error) {
+	return json.Marshal(struct {
+		Data *Data `json:"data,omitempty"`
+		PayloadDataRaw
+	}{
+		PayloadDataRaw: PayloadDataRaw(payload),
+		Data:           payload.Data.Ptr(),
+	})
 }
 
 // PayloadErrorLocation error location in originating request
@@ -305,9 +326,23 @@ type PayloadDataResponse struct {
 	Errors []PayloadError         `json:"errors,omitempty"`
 }
 
-// Message encapsulates every message within apollows protocol in both directions
-type Message struct {
+// MessageRaw encapsulates every message within apollows protocol in both directions
+type MessageRaw struct {
 	ID      string    `json:"id,omitempty"`
 	Type    Operation `json:"type"`
-	Payload Data      `json:"payload,omitempty"`
+	Payload Data      `json:"payload"`
+}
+
+// Message type-alias for (de-)serialization
+type Message MessageRaw
+
+// MarshalJSON serializes Message to JSON, excluding empty id or payload from serialized fields.
+func (message Message) MarshalJSON() (bs []byte, err error) {
+	return json.Marshal(struct {
+		Payload *Data `json:"payload,omitempty"`
+		MessageRaw
+	}{
+		MessageRaw: MessageRaw(message),
+		Payload:    message.Payload.Ptr(),
+	})
 }

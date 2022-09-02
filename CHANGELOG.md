@@ -1,3 +1,15 @@
+v1.4.0
+------
+- Added support for per-request protocol selection for websocket subscriptions using websocket 
+  subprotocol negotiation. (#2)
+- Added Stringer implementation to `apollows.Protocol`, to avoid the explicit type casts.
+  In 1.5.0 underlying Protocol type will be replaced with an integer, migration to .String()
+  as advised.
+
+v1.3.4
+------
+- Fixed serialization of empty data/payloads (#1)
+
 v1.3.0
 ------
 - Breaking change: root object moved to functional options parametrization
